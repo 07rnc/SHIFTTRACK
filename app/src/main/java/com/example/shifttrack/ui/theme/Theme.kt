@@ -1,54 +1,60 @@
 package com.example.shifttrack.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+import androidx.compose.ui.graphics.Color
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = BrandBlue,
     onPrimary = Color.White,
+    primaryContainer = BrandBlueLight,
+    onPrimaryContainer = BrandBlueDark,
+    secondary = Slate700,
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    secondaryContainer = Slate100,
+    onSecondaryContainer = Slate900,
+    background = Slate50,
+    onBackground = Slate900,
+    surface = Color.White,
+    onSurface = Slate900,
+    surfaceVariant = Slate100,
+    onSurfaceVariant = Slate700,
+    error = Rose600,
+    onError = Color.White,
+    errorContainer = Rose100,
+    onErrorContainer = Rose600
+)
+
+private val DarkColorScheme = darkColorScheme(
+    primary = BrandBlueLight,
+    onPrimary = BrandBlueDark,
+    primaryContainer = BrandBlueDark,
+    onPrimaryContainer = Color.White,
+    secondary = Slate200,
+    onSecondary = Slate900,
+    secondaryContainer = Slate800,
+    onSecondaryContainer = Color.White,
+    background = Slate900,
+    onBackground = Color.White,
+    surface = Slate800,
+    onSurface = Color.White,
+    surfaceVariant = Slate700,
+    onSurfaceVariant = Slate200,
+    error = Rose600,
+    onError = Color.White,
+    errorContainer = Rose100,
+    onErrorContainer = Color.White
 )
 
 @Composable
 fun SHIFTTRACKTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
