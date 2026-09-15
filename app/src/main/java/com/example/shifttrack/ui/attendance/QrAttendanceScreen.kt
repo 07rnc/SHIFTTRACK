@@ -15,8 +15,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,11 +27,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.shifttrack.qr.QrCodeAnalyzer
+import com.example.shifttrack.ui.common.ShiftTrackButton
 import com.example.shifttrack.ui.theme.*
 import java.util.concurrent.Executors
 
@@ -57,27 +57,44 @@ fun QrAttendanceScreen(
         hasCameraPermission = granted
     }
 
-    var isTorchOn by remember { mutableStateOf(false) }
+    fun handleBack() {
+        viewModel.resetActionState()
+        onNavigateBack()
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("QR Scanner Attendance", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "QR Scanner Attendance",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = { handleBack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 actions = {
                     // Demo Mock QR scan trigger for easy testing on emulators without camera
                     IconButton(onClick = { viewModel.performQrClockIn("SHIFTTRACK-OFFICE-ROOM-101-FALLBACK") }) {
-                        Icon(Icons.Default.QrCode, contentDescription = "Scan Demo QR", tint = BrandBlue)
+                        Icon(
+                            imageVector = Icons.Default.QrCode,
+                            contentDescription = "Scan Demo QR",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        containerColor = Slate900
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(
             modifier = Modifier
@@ -136,60 +153,62 @@ fun QrAttendanceScreen(
                         Box(
                             modifier = Modifier
                                 .size(260.dp)
-                                .border(BorderStroke(3.dp, BrandBlue), RoundedCornerShape(16.dp))
+                                .border(BorderStroke(3.dp, MaterialTheme.colorScheme.primary), RoundedCornerShape(Radius.lg))
                                 .background(Color.Transparent)
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(Spacing.lg))
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(Radius.sm))
                                 .background(Color.Black.copy(alpha = 0.7f))
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
                         ) {
                             Text(
                                 text = "Point camera at office QR code",
                                 color = Color.White,
-                                fontSize = 13.sp,
+                                style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
                         }
                     }
                 }
             } else {
-                // Camera Permission Denied Card
+                // Camera Permission Denied View
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(24.dp),
+                        .padding(Spacing.xxl),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(64.dp))
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Spacer(modifier = Modifier.height(Spacing.lg))
                     Text(
                         text = "Camera Permission Required",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.sm))
                     Text(
                         text = "To scan the fallback office QR code, ShiftTrack needs access to your device camera.",
-                        color = Slate200,
-                        fontSize = 13.sp,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Button(
-                        onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
-                    ) {
-                        Text("Grant Camera Permission")
-                    }
+                    Spacer(modifier = Modifier.height(Spacing.xl))
+                    ShiftTrackButton(
+                        text = "Grant Camera Permission",
+                        onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }
+                    )
                 }
             }
 
-            // Result Bottom Sheet or Dialog
+            // Result State Overlays
             when (val state = actionState) {
                 is AttendanceActionState.Submitting -> {
                     Box(
@@ -199,38 +218,47 @@ fun QrAttendanceScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Card(
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                            shape = RoundedCornerShape(Radius.lg),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
                             Column(
-                                modifier = Modifier.padding(24.dp),
+                                modifier = Modifier.padding(Spacing.xxl),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                CircularProgressIndicator(color = BrandBlue)
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text("Validating QR Code with Server...", fontWeight = FontWeight.Bold, color = Slate900)
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.height(Spacing.md))
+                                Text(
+                                    text = "Validating QR Code with Server...",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
                     }
                 }
                 is AttendanceActionState.Success -> {
                     AlertDialog(
-                        onDismissRequest = {
-                            viewModel.resetActionState()
-                            onNavigateBack()
+                        onDismissRequest = { handleBack() },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = ShiftTrackTheme.statusColors.success.content,
+                                modifier = Modifier.size(36.dp)
+                            )
                         },
-                        icon = { Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Emerald600, modifier = Modifier.size(36.dp)) },
-                        title = { Text("QR Attendance Verified", fontWeight = FontWeight.Bold) },
-                        text = { Text(state.message) },
+                        title = {
+                            Text("QR Attendance Verified", style = MaterialTheme.typography.titleMedium)
+                        },
+                        text = {
+                            Text(state.message, style = MaterialTheme.typography.bodyMedium)
+                        },
                         confirmButton = {
                             Button(
-                                onClick = {
-                                    viewModel.resetActionState()
-                                    onNavigateBack()
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Emerald600)
+                                onClick = { handleBack() },
+                                colors = ButtonDefaults.buttonColors(containerColor = ShiftTrackTheme.statusColors.success.content)
                             ) {
-                                Text("Done")
+                                Text("Done", color = MaterialTheme.colorScheme.surface)
                             }
                         }
                     )
@@ -238,9 +266,20 @@ fun QrAttendanceScreen(
                 is AttendanceActionState.Error -> {
                     AlertDialog(
                         onDismissRequest = { viewModel.resetActionState() },
-                        icon = { Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = Rose600, modifier = Modifier.size(36.dp)) },
-                        title = { Text("Attendance Rejected", fontWeight = FontWeight.Bold) },
-                        text = { Text(state.message) },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.ErrorOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        },
+                        title = {
+                            Text("Attendance Rejected", style = MaterialTheme.typography.titleMedium)
+                        },
+                        text = {
+                            Text(state.message, style = MaterialTheme.typography.bodyMedium)
+                        },
                         confirmButton = {
                             Button(onClick = { viewModel.resetActionState() }) {
                                 Text("Scan Again")

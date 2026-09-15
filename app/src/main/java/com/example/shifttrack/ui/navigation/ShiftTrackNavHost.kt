@@ -6,10 +6,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -67,7 +64,10 @@ fun ShiftTrackNavHost(
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 4.dp
+                ) {
                     NavigationBarItem(
                         selected = currentRoute == Screen.Home.route,
                         onClick = {
@@ -78,11 +78,13 @@ fun ShiftTrackNavHost(
                             }
                         },
                         icon = { Icon(Icons.Default.Dashboard, contentDescription = "Home") },
-                        label = { Text("Home", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+                        label = { Text("Home", style = MaterialTheme.typography.labelMedium) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = BrandBlue,
-                            selectedTextColor = BrandBlue,
-                            indicatorColor = BrandBlueLight
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
                         )
                     )
                     NavigationBarItem(
@@ -95,11 +97,13 @@ fun ShiftTrackNavHost(
                             }
                         },
                         icon = { Icon(Icons.Default.History, contentDescription = "Attendance") },
-                        label = { Text("Attendance", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+                        label = { Text("Attendance", style = MaterialTheme.typography.labelMedium) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = BrandBlue,
-                            selectedTextColor = BrandBlue,
-                            indicatorColor = BrandBlueLight
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
                         )
                     )
                     NavigationBarItem(
@@ -112,11 +116,13 @@ fun ShiftTrackNavHost(
                             }
                         },
                         icon = { Icon(Icons.Default.EventBusy, contentDescription = "Leave") },
-                        label = { Text("Leave", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+                        label = { Text("Leave", style = MaterialTheme.typography.labelMedium) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = BrandBlue,
-                            selectedTextColor = BrandBlue,
-                            indicatorColor = BrandBlueLight
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
                         )
                     )
                     NavigationBarItem(
@@ -129,11 +135,13 @@ fun ShiftTrackNavHost(
                             }
                         },
                         icon = { Icon(Icons.Default.AccountCircle, contentDescription = "Profile") },
-                        label = { Text("Profile", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+                        label = { Text("Profile", style = MaterialTheme.typography.labelMedium) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = BrandBlue,
-                            selectedTextColor = BrandBlue,
-                            indicatorColor = BrandBlueLight
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
                         )
                     )
                 }

@@ -7,20 +7,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.shifttrack.data.api.AppConfig
 import com.example.shifttrack.data.local.SessionManager
 import com.example.shifttrack.data.repository.AuthRepository
+import com.example.shifttrack.ui.common.ShiftTrackCard
+import com.example.shifttrack.ui.common.ShiftTrackDestructiveButton
 import com.example.shifttrack.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -41,160 +41,163 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Employee Account", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                title = {
+                    Text(
+                        text = "Employee Account",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        containerColor = Slate50
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp)
+                .padding(Spacing.screen)
         ) {
             // Profile Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
+            ShiftTrackCard(elevation = 1.dp) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(
                         modifier = Modifier
                             .size(72.dp)
                             .clip(CircleShape)
-                            .background(BrandBlueLight),
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = user?.fullName?.split(" ")?.mapNotNull { it.firstOrNull()?.toString() }?.take(2)?.joinToString("") ?: "ST",
-                            fontSize = 24.sp,
+                            style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
-                            color = BrandBlue
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(Spacing.md))
 
                     Text(
                         text = user?.fullName ?: "Employee",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Slate900
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(Spacing.xxs))
 
                     Text(
                         text = user?.employeeCode ?: "ST-0104",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = BrandBlue
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(Spacing.xxs))
 
                     Text(
                         text = user?.email ?: "employee@shifttrack.com",
-                        fontSize = 13.sp,
-                        color = Slate500
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.lg))
 
-                    HorizontalDivider(color = Slate200)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.lg))
 
                     ProfileDetailRow("Department", user?.department ?: "Engineering & Operations")
                     ProfileDetailRow("Role", user?.role ?: "EMPLOYEE")
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(Spacing.lg))
 
-            // Server & Architecture Settings
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "System & Server Connection",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Slate900
-                    )
+            // Server & Architecture Settings Card
+            ShiftTrackCard(elevation = 1.dp) {
+                Text(
+                    text = "System & Server Connection",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(Spacing.md))
 
-                    Text("Backend API Endpoint", fontSize = 12.sp, color = Slate500)
-                    Text(serverUrl, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Slate900)
+                Text(
+                    text = "Backend API Endpoint",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = serverUrl,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(Spacing.md))
 
-                    // Mock mode toggle (Clearly isolated per Section 19 of requirements)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Standalone Mock Mode", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Slate900)
-                            Text("Simulate backend offline while server is being deployed", fontSize = 12.sp, color = Slate500)
-                        }
-                        Switch(
-                            checked = useMockMode,
-                            onCheckedChange = {
-                                useMockMode = it
-                                AppConfig.USE_MOCK_DATA = it
-                            }
+                // Mock mode toggle (per Section 19 of requirements)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Standalone Mock Mode",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Simulate backend offline while server is being deployed",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    val deviceToken = sessionManager.getDeviceToken()
-                    Text("FCM Device Push Token", fontSize = 12.sp, color = Slate500)
-                    Text(
-                        text = if (!deviceToken.isNullOrBlank()) deviceToken.take(32) + "..." else "Generating device token...",
-                        fontSize = 12.sp,
-                        color = Slate700
+                    Switch(
+                        checked = useMockMode,
+                        onCheckedChange = {
+                            useMockMode = it
+                            AppConfig.USE_MOCK_DATA = it
+                        }
                     )
                 }
+
+                Spacer(modifier = Modifier.height(Spacing.md))
+
+                val deviceToken = sessionManager.getDeviceToken()
+                Text(
+                    text = "FCM Device Push Token",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = if (!deviceToken.isNullOrBlank()) deviceToken.take(32) + "..." else "Generating device token...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.xxl))
 
             // Logout Button
-            Button(
-                onClick = { showLogoutDialog = true },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Rose100),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = Rose600)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Sign Out of ShiftTrack", color = Rose600, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-            }
+            ShiftTrackDestructiveButton(
+                text = "Sign Out of ShiftTrack",
+                icon = Icons.AutoMirrored.Filled.ExitToApp,
+                onClick = { showLogoutDialog = true }
+            )
 
             if (showLogoutDialog) {
                 AlertDialog(
                     onDismissRequest = { showLogoutDialog = false },
-                    title = { Text("Confirm Logout") },
-                    text = { Text("Are you sure you want to end your current session on this device?") },
+                    title = { Text("Confirm Logout", style = MaterialTheme.typography.titleMedium) },
+                    text = { Text("Are you sure you want to end your current session on this device?", style = MaterialTheme.typography.bodyMedium) },
                     confirmButton = {
                         Button(
                             onClick = {
@@ -204,9 +207,9 @@ fun ProfileScreen(
                                     onLogoutSuccess()
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Rose600)
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                         ) {
-                            Text("Sign Out")
+                            Text("Sign Out", color = MaterialTheme.colorScheme.onError)
                         }
                     },
                     dismissButton = {
@@ -225,10 +228,10 @@ fun ProfileDetailRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = Spacing.xxs),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label, fontSize = 13.sp, color = Slate500)
-        Text(text = value, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Slate900)
+        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
     }
 }

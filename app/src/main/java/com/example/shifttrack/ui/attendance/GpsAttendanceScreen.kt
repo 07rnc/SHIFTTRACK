@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,22 +11,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.shifttrack.data.api.AppConfig
-import com.example.shifttrack.ui.common.ErrorBanner
+import com.example.shifttrack.ui.common.*
 import com.example.shifttrack.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,54 +50,71 @@ fun GpsAttendanceScreen(
                                 perms[Manifest.permission.ACCESS_COARSE_LOCATION] == true
     }
 
+    fun handleBack() {
+        viewModel.resetActionState()
+        onNavigateBack()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("GPS Attendance", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "GPS Attendance",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = { handleBack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        containerColor = Slate50
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(Spacing.screen),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Permission Rationale Card if missing
             if (!hasLocationPermission) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Amber100),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    shape = RoundedCornerShape(Radius.lg),
+                    colors = CardDefaults.cardColors(containerColor = ShiftTrackTheme.statusColors.warning.container)
                 ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
+                    Column(modifier = Modifier.padding(Spacing.lg)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.LocationOff, contentDescription = null, tint = Amber600)
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.Default.LocationOff,
+                                contentDescription = null,
+                                tint = ShiftTrackTheme.statusColors.warning.content
+                            )
+                            Spacer(modifier = Modifier.width(Spacing.sm))
                             Text(
                                 text = "Location Permission Required",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Amber600
+                                style = MaterialTheme.typography.titleMedium,
+                                color = ShiftTrackTheme.statusColors.warning.content
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(Spacing.sm))
                         Text(
-                            text = "ShiftTrack uses GPS to verify you are present at the configured workplace geofence. The backend performs authoritative validation of your coordinates. Permission is required to clock in.",
-                            fontSize = 13.sp,
-                            color = Slate700
+                            text = "ShiftTrack uses GPS to verify you are present at the workplace geofence. The backend performs authoritative validation of your coordinates. Permission is required to record attendance.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = ShiftTrackTheme.statusColors.warning.content
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(Spacing.md))
                         Button(
                             onClick = {
                                 permissionLauncher.launch(
@@ -110,156 +124,193 @@ fun GpsAttendanceScreen(
                                     )
                                 )
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Amber600),
-                            shape = RoundedCornerShape(10.dp)
+                            colors = ButtonDefaults.buttonColors(containerColor = ShiftTrackTheme.statusColors.warning.content),
+                            shape = RoundedCornerShape(Radius.sm)
                         ) {
-                            Text("Grant Location Permission")
+                            Text(
+                                text = "Grant Location Permission",
+                                color = MaterialTheme.colorScheme.surface
+                            )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(Spacing.lg))
             }
 
             // Central Geofence Status Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
+            ShiftTrackCard(elevation = 2.dp) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(80.dp)
+                            .size(76.dp)
                             .clip(CircleShape)
-                            .background(BrandBlueLight),
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.GpsFixed,
                             contentDescription = null,
-                            tint = BrandBlue,
-                            modifier = Modifier.size(44.dp)
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(40.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.lg))
 
                     Text(
                         text = "Authoritative GPS Clock-In",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Slate900
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(Spacing.xs))
 
                     Text(
                         text = "Device coordinates are sent directly to the backend for geofence validation against office boundaries.",
-                        fontSize = 13.sp,
-                        color = Slate500,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(Spacing.xl))
 
                     // Office Geofence Target Info
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Slate100)
-                            .padding(14.dp)
+                            .clip(RoundedCornerShape(Radius.md))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(Spacing.cardPadding)
                     ) {
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Business, contentDescription = null, tint = Slate700, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Business,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(Spacing.xs))
                                 Text(
                                     text = AppConfig.DEMO_OFFICE_NAME,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Slate900
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(Spacing.xxs))
                             Text(
                                 text = "Allowed Radius: 200 meters around office site",
-                                fontSize = 12.sp,
-                                color = Slate500
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(Spacing.xxl))
 
-                    // Dynamic Result / Status Cards
+                    // Dynamic Result / Status Views
                     when (val state = actionState) {
                         is AttendanceActionState.AcquiringLocation -> {
-                            CircularProgressIndicator(color = BrandBlue)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("Acquiring GPS fix...", fontSize = 14.sp, color = Slate700)
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.height(Spacing.sm))
+                            Text(
+                                text = "Acquiring GPS fix...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                         is AttendanceActionState.Submitting -> {
-                            CircularProgressIndicator(color = BrandBlue)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("Authorizing attendance with server...", fontSize = 14.sp, color = Slate700)
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.height(Spacing.sm))
+                            Text(
+                                text = "Authorizing attendance with server...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                         is AttendanceActionState.Success -> {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = Emerald100),
-                                shape = RoundedCornerShape(12.dp)
+                                colors = CardDefaults.cardColors(containerColor = ShiftTrackTheme.statusColors.success.container),
+                                shape = RoundedCornerShape(Radius.md)
                             ) {
-                                Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Emerald600, modifier = Modifier.size(36.dp))
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text("Clock-In Successful!", fontWeight = FontWeight.Bold, color = Emerald600, fontSize = 16.sp)
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(state.message, color = Slate700, fontSize = 13.sp, textAlign = TextAlign.Center)
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Button(
-                                        onClick = {
-                                            viewModel.resetActionState()
-                                            onNavigateBack()
-                                        },
-                                        colors = ButtonDefaults.buttonColors(containerColor = Emerald600)
-                                    ) {
-                                        Text("Return to Dashboard")
-                                    }
+                                Column(
+                                    modifier = Modifier.padding(Spacing.lg),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = ShiftTrackTheme.statusColors.success.content,
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(Spacing.sm))
+                                    Text(
+                                        text = "Clock-In Successful!",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = ShiftTrackTheme.statusColors.success.content
+                                    )
+                                    Spacer(modifier = Modifier.height(Spacing.xs))
+                                    Text(
+                                        text = state.message,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = ShiftTrackTheme.statusColors.success.content,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(Spacing.md))
+                                    ShiftTrackButton(
+                                        text = "Return to Dashboard",
+                                        onClick = { handleBack() }
+                                    )
                                 }
                             }
                         }
                         is AttendanceActionState.OutsideGeofence -> {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = Amber100),
-                                shape = RoundedCornerShape(12.dp)
+                                colors = CardDefaults.cardColors(containerColor = ShiftTrackTheme.statusColors.warning.container),
+                                shape = RoundedCornerShape(Radius.md)
                             ) {
-                                Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(Icons.Default.Warning, contentDescription = null, tint = Amber600, modifier = Modifier.size(36.dp))
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text("Outside Authorized Geofence", fontWeight = FontWeight.Bold, color = Amber600, fontSize = 16.sp)
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(state.message, color = Slate700, fontSize = 13.sp, textAlign = TextAlign.Center)
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Row {
-                                        OutlinedButton(onClick = { viewModel.performGpsClockIn() }) {
-                                            Text("Retry GPS")
-                                        }
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Button(
-                                            onClick = onNavigateQrFallback,
-                                            colors = ButtonDefaults.buttonColors(containerColor = Amber600)
-                                        ) {
-                                            Text("Use QR Fallback")
-                                        }
+                                Column(
+                                    modifier = Modifier.padding(Spacing.lg),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = ShiftTrackTheme.statusColors.warning.content,
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(Spacing.sm))
+                                    Text(
+                                        text = "Outside Authorized Geofence",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = ShiftTrackTheme.statusColors.warning.content
+                                    )
+                                    Spacer(modifier = Modifier.height(Spacing.xs))
+                                    Text(
+                                        text = state.message,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = ShiftTrackTheme.statusColors.warning.content,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(Spacing.md))
+                                    Row(modifier = Modifier.fillMaxWidth()) {
+                                        ShiftTrackOutlinedButton(
+                                            text = "Retry GPS",
+                                            modifier = Modifier.weight(1f),
+                                            onClick = { viewModel.performGpsClockIn() }
+                                        )
+                                        Spacer(modifier = Modifier.width(Spacing.sm))
+                                        ShiftTrackButton(
+                                            text = "Use QR Fallback",
+                                            modifier = Modifier.weight(1f),
+                                            onClick = onNavigateQrFallback
+                                        )
                                     }
                                 }
                             }
@@ -271,7 +322,9 @@ fun GpsAttendanceScreen(
                             )
                         }
                         is AttendanceActionState.Idle -> {
-                            Button(
+                            ShiftTrackButton(
+                                text = "Record GPS Clock-In",
+                                icon = Icons.Default.MyLocation,
                                 onClick = {
                                     if (hasLocationPermission) {
                                         viewModel.performGpsClockIn()
@@ -283,31 +336,16 @@ fun GpsAttendanceScreen(
                                             )
                                         )
                                     }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(52.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
-                            ) {
-                                Icon(Icons.Default.MyLocation, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Record GPS Clock-In", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                            }
+                                }
+                            )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(Spacing.sm))
 
-                            OutlinedButton(
-                                onClick = onNavigateQrFallback,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Icon(Icons.Default.QrCodeScanner, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Switch to QR Scanner Fallback")
-                            }
+                            ShiftTrackOutlinedButton(
+                                text = "Switch to QR Scanner Fallback",
+                                icon = Icons.Default.QrCodeScanner,
+                                onClick = onNavigateQrFallback
+                            )
                         }
                     }
                 }

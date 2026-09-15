@@ -1,22 +1,22 @@
 package com.example.shifttrack.ui.leave
 
-import androidx.compose.foundation.background
+import android.app.DatePickerDialog
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.shifttrack.ui.common.ErrorBanner
+import com.example.shifttrack.ui.common.*
 import com.example.shifttrack.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -28,6 +28,7 @@ fun LeaveRequestScreen(
     onNavigateBack: () -> Unit,
     onSubmissionComplete: () -> Unit
 ) {
+    val context = LocalContext.current
     val submitState by viewModel.submitState.collectAsState()
     val sdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
@@ -40,180 +41,225 @@ fun LeaveRequestScreen(
 
     val leaveTypes = listOf("CASUAL", "SICK", "ANNUAL", "UNPAID")
 
+    fun showDatePicker(currentDateStr: String, onDateSelected: (String) -> Unit) {
+        val calendar = Calendar.getInstance()
+        try {
+            val parsed = sdf.parse(currentDateStr)
+            if (parsed != null) calendar.time = parsed
+        } catch (_: Exception) {}
+
+        DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                val selectedCal = Calendar.getInstance()
+                selectedCal.set(year, month, dayOfMonth)
+                onDateSelected(sdf.format(selectedCal.time))
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).show()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Request Leave", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "Request Leave",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        containerColor = Slate50
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp)
+                .padding(Spacing.screen)
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "New Leave Application",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Slate900
+            ShiftTrackCard(elevation = 2.dp) {
+                Text(
+                    text = "New Leave Application",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Submit a request to your manager for attendance approval",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.xl))
+
+                if (submitState is LeaveSubmitState.Error) {
+                    ErrorBanner(
+                        message = (submitState as LeaveSubmitState.Error).message,
+                        onRetry = { viewModel.resetSubmitState() }
                     )
-                    Text(
-                        text = "Submit a request to your manager for attendance approval",
-                        fontSize = 13.sp,
-                        color = Slate500
-                    )
+                    Spacer(modifier = Modifier.height(Spacing.md))
+                }
 
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    if (submitState is LeaveSubmitState.Error) {
-                        ErrorBanner(
-                            message = (submitState as LeaveSubmitState.Error).message,
-                            onRetry = { viewModel.resetSubmitState() }
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-
-                    // Leave Type Selector
-                    Text("Leave Type", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Slate700)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    ExposedDropdownMenuBox(
-                        expanded = typeDropdownExpanded,
-                        onExpandedChange = { typeDropdownExpanded = !typeDropdownExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = "$leaveType Leave",
-                            onValueChange = {},
-                            readOnly = true,
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeDropdownExpanded) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                        ExposedDropdownMenu(
-                            expanded = typeDropdownExpanded,
-                            onDismissRequest = { typeDropdownExpanded = false }
-                        ) {
-                            leaveTypes.forEach { type ->
-                                DropdownMenuItem(
-                                    text = { Text("$type Leave") },
-                                    onClick = {
-                                        leaveType = type
-                                        typeDropdownExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Start & End Date Inputs
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Start Date", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Slate700)
-                            Spacer(modifier = Modifier.height(6.dp))
-                            OutlinedTextField(
-                                value = startDate,
-                                onValueChange = { startDate = it },
-                                placeholder = { Text("YYYY-MM-DD") },
-                                singleLine = true,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("End Date", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Slate700)
-                            Spacer(modifier = Modifier.height(6.dp))
-                            OutlinedTextField(
-                                value = endDate,
-                                onValueChange = { endDate = it },
-                                placeholder = { Text("YYYY-MM-DD") },
-                                singleLine = true,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Half-Day Option
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = isHalfDay,
-                            onCheckedChange = { isHalfDay = it }
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Apply as Half-Day leave (0.5 working day)",
-                            fontSize = 14.sp,
-                            color = Slate700
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Reason Text Area
-                    Text("Reason for Leave", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Slate700)
-                    Spacer(modifier = Modifier.height(6.dp))
+                // Leave Type Selector
+                Text(
+                    text = "Leave Type",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(Spacing.xs))
+                ExposedDropdownMenuBox(
+                    expanded = typeDropdownExpanded,
+                    onExpandedChange = { typeDropdownExpanded = !typeDropdownExpanded }
+                ) {
                     OutlinedTextField(
-                        value = reason,
-                        onValueChange = { reason = it },
-                        placeholder = { Text("Please explain the reason for your leave request...") },
+                        value = "$leaveType Leave",
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeDropdownExpanded) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(120.dp),
-                        shape = RoundedCornerShape(10.dp)
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                        shape = RoundedCornerShape(Radius.md)
                     )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Submit Button
-                    Button(
-                        onClick = {
-                            viewModel.submitRequest(
-                                leaveType = leaveType,
-                                startDate = startDate,
-                                endDate = endDate,
-                                reason = reason,
-                                isHalfDay = isHalfDay
-                            )
-                        },
-                        enabled = submitState !is LeaveSubmitState.Submitting,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandBlue)
+                    ExposedDropdownMenu(
+                        expanded = typeDropdownExpanded,
+                        onDismissRequest = { typeDropdownExpanded = false }
                     ) {
-                        if (submitState is LeaveSubmitState.Submitting) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                        } else {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Submit Leave Request", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        leaveTypes.forEach { type ->
+                            DropdownMenuItem(
+                                text = { Text("$type Leave") },
+                                onClick = {
+                                    leaveType = type
+                                    typeDropdownExpanded = false
+                                }
+                            )
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(Spacing.lg))
+
+                // Start & End Date Inputs with Calendar Pickers
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Start Date",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(Spacing.xs))
+                        OutlinedTextField(
+                            value = startDate,
+                            onValueChange = { startDate = it },
+                            readOnly = true,
+                            trailingIcon = {
+                                IconButton(onClick = { showDatePicker(startDate) { startDate = it } }) {
+                                    Icon(Icons.Default.CalendarMonth, contentDescription = "Pick Start Date")
+                                }
+                            },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showDatePicker(startDate) { startDate = it } },
+                            shape = RoundedCornerShape(Radius.md)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(Spacing.md))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "End Date",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(Spacing.xs))
+                        OutlinedTextField(
+                            value = endDate,
+                            onValueChange = { endDate = it },
+                            readOnly = true,
+                            trailingIcon = {
+                                IconButton(onClick = { showDatePicker(endDate) { endDate = it } }) {
+                                    Icon(Icons.Default.CalendarMonth, contentDescription = "Pick End Date")
+                                }
+                            },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showDatePicker(endDate) { endDate = it } },
+                            shape = RoundedCornerShape(Radius.md)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.lg))
+
+                // Half-Day Option
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Checkbox(
+                        checked = isHalfDay,
+                        onCheckedChange = { isHalfDay = it },
+                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.xs))
+                    Text(
+                        text = "Apply as Half-Day leave (0.5 working day)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.lg))
+
+                // Reason Text Area
+                Text(
+                    text = "Reason for Leave",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(Spacing.xs))
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = { reason = it },
+                    placeholder = { Text("Please explain the reason for your leave request...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    shape = RoundedCornerShape(Radius.md)
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.xxl))
+
+                // Submit Button
+                ShiftTrackButton(
+                    text = "Submit Leave Request",
+                    icon = Icons.AutoMirrored.Filled.Send,
+                    isLoading = submitState is LeaveSubmitState.Submitting,
+                    onClick = {
+                        viewModel.submitRequest(
+                            leaveType = leaveType,
+                            startDate = startDate,
+                            endDate = endDate,
+                            reason = reason,
+                            isHalfDay = isHalfDay
+                        )
+                    }
+                )
             }
 
             // Success Dialog
@@ -224,10 +270,22 @@ fun LeaveRequestScreen(
                         viewModel.resetSubmitState()
                         onSubmissionComplete()
                     },
-                    icon = { Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Emerald600, modifier = Modifier.size(36.dp)) },
-                    title = { Text("Leave Request Submitted") },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = ShiftTrackTheme.statusColors.success.content,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    },
+                    title = {
+                        Text("Leave Request Submitted", style = MaterialTheme.typography.titleMedium)
+                    },
                     text = {
-                        Text("Your leave request for ${app.startDate} to ${app.endDate} has been submitted with authoritative status: ${app.status}. Your manager will review it shortly.")
+                        Text(
+                            text = "Your leave request for ${app.startDate} to ${app.endDate} has been submitted with authoritative status: ${app.status}. Your manager will review it shortly.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     },
                     confirmButton = {
                         Button(
@@ -235,9 +293,9 @@ fun LeaveRequestScreen(
                                 viewModel.resetSubmitState()
                                 onSubmissionComplete()
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Emerald600)
+                            colors = ButtonDefaults.buttonColors(containerColor = ShiftTrackTheme.statusColors.success.content)
                         ) {
-                            Text("View Leave History")
+                            Text("View Leave History", color = MaterialTheme.colorScheme.surface)
                         }
                     }
                 )

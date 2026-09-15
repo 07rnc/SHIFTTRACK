@@ -5,6 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 
 private val LightColorScheme = lightColorScheme(
@@ -21,33 +23,44 @@ private val LightColorScheme = lightColorScheme(
     surface = Color.White,
     onSurface = Slate900,
     surfaceVariant = Slate100,
-    onSurfaceVariant = Slate700,
-    error = Rose600,
+    onSurfaceVariant = Slate600,
+    outline = Slate200,
+    outlineVariant = Slate300,
+    error = Color(0xFFDC2626),
     onError = Color.White,
-    errorContainer = Rose100,
-    onErrorContainer = Rose600
+    errorContainer = Color(0xFFFEE2E2),
+    onErrorContainer = Color(0xFF991B1B)
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = BrandBlueLight,
-    onPrimary = BrandBlueDark,
+    primary = BrandBlueAccent,
+    onPrimary = Slate950,
     primaryContainer = BrandBlueDark,
-    onPrimaryContainer = Color.White,
-    secondary = Slate200,
-    onSecondary = Slate900,
+    onPrimaryContainer = BrandBlueLight,
+    secondary = Slate300,
+    onSecondary = Slate950,
     secondaryContainer = Slate800,
     onSecondaryContainer = Color.White,
-    background = Slate900,
-    onBackground = Color.White,
-    surface = Slate800,
-    onSurface = Color.White,
-    surfaceVariant = Slate700,
-    onSurfaceVariant = Slate200,
-    error = Rose600,
-    onError = Color.White,
-    errorContainer = Rose100,
-    onErrorContainer = Color.White
+    background = Slate950,
+    onBackground = Slate50,
+    surface = Slate900,
+    onSurface = Slate50,
+    surfaceVariant = Slate800,
+    onSurfaceVariant = Slate400,
+    outline = Slate700,
+    outlineVariant = Slate600,
+    error = Color(0xFFF87171),
+    onError = Slate950,
+    errorContainer = Color(0xFF7F1D1D),
+    onErrorContainer = Color(0xFFFEE2E2)
 )
+
+object ShiftTrackTheme {
+    val statusColors: ShiftTrackStatusColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalStatusColors.current
+}
 
 @Composable
 fun SHIFTTRACKTheme(
@@ -55,10 +68,13 @@ fun SHIFTTRACKTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val statusColors = if (darkTheme) DarkStatusColors else LightStatusColors
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(LocalStatusColors provides statusColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }

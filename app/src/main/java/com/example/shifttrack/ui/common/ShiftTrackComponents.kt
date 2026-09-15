@@ -3,9 +3,12 @@ package com.example.shifttrack.ui.common
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -16,43 +19,216 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shifttrack.data.model.BackendLeaveStatus
 import com.example.shifttrack.ui.theme.*
 
+/**
+ * Standard ShiftTrack Card:
+ * Consistent 16dp corner radius, theme-aware surface, subtle border, and 16dp internal padding.
+ */
+@Composable
+fun ShiftTrackCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    border: BorderStroke? = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    elevation: Dp = 0.dp,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = if (onClick != null) {
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(Radius.lg))
+                .clickable(onClick = onClick)
+        } else {
+            modifier.fillMaxWidth()
+        },
+        shape = RoundedCornerShape(Radius.lg),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = border,
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.cardPadding),
+            content = content
+        )
+    }
+}
+
+/**
+ * Standard Primary Action Button:
+ * Consistent 50dp height, 12dp corner radius, loading spinner state, and bold label.
+ */
+@Composable
+fun ShiftTrackButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isLoading: Boolean = false,
+    icon: ImageVector? = null,
+    containerColor: Color = MaterialTheme.colorScheme.primary,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled && !isLoading,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(ButtonHeight.default),
+        shape = RoundedCornerShape(Radius.md),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+            disabledContainerColor = containerColor.copy(alpha = 0.4f),
+            disabledContentColor = contentColor.copy(alpha = 0.6f)
+        )
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = contentColor,
+                strokeWidth = 2.dp
+            )
+        } else {
+            if (icon != null) {
+                Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(Spacing.sm))
+            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+    }
+}
+
+/**
+ * Standard Outlined Button:
+ * Standard secondary action button with consistent 48dp height and 12dp corner radius.
+ */
+@Composable
+fun ShiftTrackOutlinedButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    icon: ImageVector? = null,
+    contentColor: Color = MaterialTheme.colorScheme.primary,
+    borderColor: Color = MaterialTheme.colorScheme.outline
+) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(ButtonHeight.default),
+        shape = RoundedCornerShape(Radius.md),
+        border = BorderStroke(1.dp, if (enabled) borderColor else borderColor.copy(alpha = 0.4f)),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = contentColor)
+    ) {
+        if (icon != null) {
+            Icon(imageVector = icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(Spacing.sm))
+        }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = contentColor
+        )
+    }
+}
+
+/**
+ * Standard Destructive Button (e.g. Clock Out, Logout):
+ */
+@Composable
+fun ShiftTrackDestructiveButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isLoading: Boolean = false,
+    icon: ImageVector? = null
+) {
+    val errorColor = MaterialTheme.colorScheme.error
+    val errorContainer = MaterialTheme.colorScheme.errorContainer
+
+    Button(
+        onClick = onClick,
+        enabled = enabled && !isLoading,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(ButtonHeight.default),
+        shape = RoundedCornerShape(Radius.md),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = errorContainer,
+            contentColor = errorColor
+        )
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = errorColor,
+                strokeWidth = 2.dp
+            )
+        } else {
+            if (icon != null) {
+                Icon(imageVector = icon, contentDescription = null, tint = errorColor, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(Spacing.sm))
+            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                color = errorColor
+            )
+        }
+    }
+}
+
+/**
+ * StatusBadge:
+ * Theme-aware status badge adapting to Light and Dark mode using ShiftTrackTheme.statusColors.
+ */
 @Composable
 fun StatusBadge(
     status: String,
     modifier: Modifier = Modifier
 ) {
-    val (bgColor, textColor, label) = when (status.uppercase()) {
+    val statusColors = ShiftTrackTheme.statusColors
+    val (statusColor, label) = when (status.uppercase()) {
         "ON_TIME", "PRESENT", "COMPLETED", BackendLeaveStatus.APPROVED -> 
-            Triple(Emerald100, Emerald600, if (status == BackendLeaveStatus.APPROVED) "Approved" else if (status == "ON_TIME") "On Time" else "Completed")
+            Pair(statusColors.success, if (status == BackendLeaveStatus.APPROVED) "Approved" else if (status == "ON_TIME") "On Time" else "Completed")
         "LATE", BackendLeaveStatus.PENDING, "SCHEDULED" -> 
-            Triple(Amber100, Amber600, if (status == BackendLeaveStatus.PENDING) "Pending Approval" else if (status == "LATE") "Late" else "Scheduled")
+            Pair(statusColors.warning, if (status == BackendLeaveStatus.PENDING) "Pending Approval" else if (status == "LATE") "Late" else "Scheduled")
         "ABSENT", "EARLY_DEPARTURE", BackendLeaveStatus.REJECTED, BackendLeaveStatus.DENIED -> 
-            Triple(Rose100, Rose600, if (status == BackendLeaveStatus.REJECTED || status == BackendLeaveStatus.DENIED) "Rejected" else "Early Departure")
+            Pair(statusColors.error, if (status == BackendLeaveStatus.REJECTED || status == BackendLeaveStatus.DENIED) "Rejected" else "Early Departure")
         "CLOCKED_IN", "IN_PROGRESS" -> 
-            Triple(BrandBlueLight, BrandBlue, if (status == "CLOCKED_IN") "Clocked In" else "In Progress")
+            Pair(statusColors.info, if (status == "CLOCKED_IN") "Clocked In" else "In Progress")
         "CLOCKED_OUT" -> 
-            Triple(Slate200, Slate700, "Clocked Out")
+            Pair(statusColors.neutral, "Clocked Out")
         else -> 
-            Triple(Slate200, Slate700, status.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() })
+            Pair(statusColors.neutral, status.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() })
     }
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
-            .background(bgColor)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .clip(RoundedCornerShape(Radius.xs))
+            .background(statusColor.container)
+            .border(BorderStroke(1.dp, statusColor.border), RoundedCornerShape(Radius.xs))
+            .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            color = textColor,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold
+            color = statusColor.content,
+            style = MaterialTheme.typography.labelSmall
         )
     }
 }
@@ -67,29 +243,36 @@ fun EmptyStateView(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(32.dp),
+            .padding(Spacing.xxxl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = Slate500
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(36.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.height(Spacing.lg))
         Text(
             text = title,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Slate900,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Spacing.xs))
         Text(
             text = message,
-            fontSize = 14.sp,
-            color = Slate500,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
     }
@@ -104,34 +287,34 @@ fun ErrorBanner(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = Rose100),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, Rose600.copy(alpha = 0.3f))
+            .padding(vertical = Spacing.xs),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        shape = RoundedCornerShape(Radius.sm),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.Warning,
                 contentDescription = null,
-                tint = Rose600,
+                tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(Spacing.sm))
             Text(
                 text = message,
-                color = Rose600,
-                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f)
             )
             if (onRetry != null) {
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(Spacing.sm))
                 TextButton(onClick = onRetry) {
-                    Text("Retry", color = Rose600, fontWeight = FontWeight.Bold)
+                    Text("Retry", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium)
                 }
             }
         }
