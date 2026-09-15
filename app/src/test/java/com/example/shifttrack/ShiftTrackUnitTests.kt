@@ -213,4 +213,75 @@ class ShiftTrackUnitTests {
         val updatedList = mockDataStore.getNotifications().getOrNull()
         assertTrue(updatedList?.find { it.id == firstNotif.id }?.isRead == true)
     }
+
+    // ==================== EDGE CASES & DOMAIN VALIDATION TESTS ====================
+
+    @Test
+    fun testLeaveSubmission_SingleDay_CalculatesOneDay() = runBlocking {
+        val req = LeaveRequestDto(
+            leaveType = "CASUAL",
+            startDate = "2026-10-05",
+            endDate = "2026-10-05",
+            reason = "Personal work",
+            isHalfDay = false
+        )
+        val result = mockDataStore.submitLeave(req)
+        assertTrue(result.isSuccess)
+        assertEquals(1.0, result.getOrNull()?.daysCount ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun testLeaveSubmission_MultiDay_CalculatesAccurateDays() = runBlocking {
+        val req = LeaveRequestDto(
+            leaveType = "ANNUAL",
+            startDate = "2026-10-01",
+            endDate = "2026-10-04", // 4 days inclusive
+            reason = "Family vacation trip",
+            isHalfDay = false
+        )
+        val result = mockDataStore.submitLeave(req)
+        assertTrue(result.isSuccess)
+        assertEquals(4.0, result.getOrNull()?.daysCount ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun testLeaveSubmission_HalfDay_CalculatesHalfDay() = runBlocking {
+        val req = LeaveRequestDto(
+            leaveType = "CASUAL",
+            startDate = "2026-10-05",
+            endDate = "2026-10-05",
+            reason = "Afternoon appointment",
+            isHalfDay = true
+        )
+        val result = mockDataStore.submitLeave(req)
+        assertTrue(result.isSuccess)
+        assertEquals(0.5, result.getOrNull()?.daysCount ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun testLeaveSubmission_HalfDay_MultiDate_Rejects() = runBlocking {
+        val req = LeaveRequestDto(
+            leaveType = "CASUAL",
+            startDate = "2026-10-01",
+            endDate = "2026-10-03",
+            reason = "Multi day half day conflict",
+            isHalfDay = true
+        )
+        val result = mockDataStore.submitLeave(req)
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull()?.message?.contains("Half-day leave must be for a single date", ignoreCase = true) == true)
+    }
+
+    @Test
+    fun testServerUrlSanitization() {
+        val context = mockk<android.content.Context>(relaxed = true)
+        val prefs = mockk<android.content.SharedPreferences>(relaxed = true)
+        every { context.getSharedPreferences(any(), any()) } returns prefs
+
+        val manager = SessionManager(context)
+        assertEquals("http://10.0.2.2:5000/", manager.sanitizeServerUrl("10.0.2.2:5000"))
+        assertEquals("http://10.0.2.2:5000/", manager.sanitizeServerUrl("http://10.0.2.2:5000"))
+        assertEquals("https://api.shifttrack.com/", manager.sanitizeServerUrl("https://api.shifttrack.com"))
+        assertEquals("http://10.0.2.2:5000/", manager.sanitizeServerUrl("   "))
+    }
 }

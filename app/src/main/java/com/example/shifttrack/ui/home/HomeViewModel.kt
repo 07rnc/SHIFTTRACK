@@ -47,7 +47,10 @@ class HomeViewModel(
                 _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             }
 
-            val user = authRepository.currentUser.value
+            var user = authRepository.currentUser.value
+            if (user == null) {
+                user = authRepository.getProfile().getOrNull()
+            }
             val shiftRes = shiftRepository.getCurrentShift()
             val attRes = attendanceRepository.getAttendanceState()
             val notifRes = notificationRepository.getNotifications()
@@ -56,13 +59,20 @@ class HomeViewModel(
             val attState = attRes.getOrNull()
             val unreadCount = notifRes.getOrNull()?.count { !it.isRead } ?: 0
 
+            val error = if (attState == null && attRes.isFailure) {
+                attRes.exceptionOrNull()?.message ?: "Unable to load attendance status"
+            } else if (shift == null && shiftRes.isFailure) {
+                shiftRes.exceptionOrNull()?.message
+            } else null
+
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 isRefreshing = false,
                 user = user,
                 currentShift = shift,
                 attendanceState = attState,
-                unreadNotifsCount = unreadCount
+                unreadNotifsCount = unreadCount,
+                errorMessage = error
             )
         }
     }

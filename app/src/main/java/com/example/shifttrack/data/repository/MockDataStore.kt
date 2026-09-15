@@ -163,7 +163,7 @@ class MockDataStore(private val sessionManager: SessionManager) {
             type = "SYSTEM",
             timestamp = "2026-09-12 11:00",
             isRead = false,
-            actionRoute = "notifications"
+            actionRoute = "notification_history"
         )
     )
 
@@ -330,13 +330,32 @@ class MockDataStore(private val sessionManager: SessionManager) {
             return Result.failure(Exception("Please provide a reason for the leave request"))
         }
 
+        if (req.isHalfDay && req.startDate != req.endDate) {
+            return Result.failure(Exception("Half-day leave must be for a single date"))
+        }
+
+        val calculatedDays = if (req.isHalfDay) {
+            0.5
+        } else {
+            try {
+                val start = dateFormat.parse(req.startDate)
+                val end = dateFormat.parse(req.endDate)
+                if (start != null && end != null) {
+                    val diff = (end.time - start.time) / (1000 * 60 * 60 * 24)
+                    (diff + 1).coerceAtLeast(1).toDouble()
+                } else 1.0
+            } catch (_: Exception) {
+                1.0
+            }
+        }
+
         val newApp = LeaveApplicationDto(
             id = "leave_" + System.currentTimeMillis(),
             employeeId = sessionManager.currentUser.value?.id ?: "emp_101",
             leaveType = req.leaveType,
             startDate = req.startDate,
             endDate = req.endDate,
-            daysCount = if (req.isHalfDay) 0.5 else 2.0,
+            daysCount = calculatedDays,
             reason = req.reason,
             status = BackendLeaveStatus.PENDING,
             appliedAt = fullDateFormat.format(Date())

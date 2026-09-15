@@ -162,21 +162,41 @@ fun LeaveRequestScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(Spacing.xs))
-                        OutlinedTextField(
-                            value = startDate,
-                            onValueChange = { startDate = it },
-                            readOnly = true,
-                            trailingIcon = {
-                                IconButton(onClick = { showDatePicker(startDate) { startDate = it } }) {
-                                    Icon(Icons.Default.CalendarMonth, contentDescription = "Pick Start Date")
-                                }
-                            },
-                            singleLine = true,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { showDatePicker(startDate) { startDate = it } },
-                            shape = RoundedCornerShape(Radius.md)
-                        )
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(
+                                value = startDate,
+                                onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = {
+                                    IconButton(onClick = {
+                                        showDatePicker(startDate) { newStart ->
+                                            startDate = newStart
+                                            if (isHalfDay || endDate < newStart) {
+                                                endDate = newStart
+                                            }
+                                        }
+                                    }) {
+                                        Icon(Icons.Default.CalendarMonth, contentDescription = "Pick Start Date")
+                                    }
+                                },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(Radius.md)
+                            )
+                            // Transparent clickable overlay so tapping anywhere triggers the picker
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clickable {
+                                        showDatePicker(startDate) { newStart ->
+                                            startDate = newStart
+                                            if (isHalfDay || endDate < newStart) {
+                                                endDate = newStart
+                                            }
+                                        }
+                                    }
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.width(Spacing.md))
                     Column(modifier = Modifier.weight(1f)) {
@@ -186,21 +206,45 @@ fun LeaveRequestScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(Spacing.xs))
-                        OutlinedTextField(
-                            value = endDate,
-                            onValueChange = { endDate = it },
-                            readOnly = true,
-                            trailingIcon = {
-                                IconButton(onClick = { showDatePicker(endDate) { endDate = it } }) {
-                                    Icon(Icons.Default.CalendarMonth, contentDescription = "Pick End Date")
-                                }
-                            },
-                            singleLine = true,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { showDatePicker(endDate) { endDate = it } },
-                            shape = RoundedCornerShape(Radius.md)
-                        )
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(
+                                value = endDate,
+                                onValueChange = {},
+                                readOnly = true,
+                                enabled = !isHalfDay,
+                                trailingIcon = {
+                                    if (!isHalfDay) {
+                                        IconButton(onClick = {
+                                            showDatePicker(endDate) { newEnd ->
+                                                endDate = newEnd
+                                                if (newEnd < startDate) {
+                                                    startDate = newEnd
+                                                }
+                                            }
+                                        }) {
+                                            Icon(Icons.Default.CalendarMonth, contentDescription = "Pick End Date")
+                                        }
+                                    }
+                                },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(Radius.md)
+                            )
+                            if (!isHalfDay) {
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .clickable {
+                                            showDatePicker(endDate) { newEnd ->
+                                                endDate = newEnd
+                                                if (newEnd < startDate) {
+                                                    startDate = newEnd
+                                                }
+                                            }
+                                        }
+                                    )
+                            }
+                        }
                     }
                 }
 
@@ -213,7 +257,12 @@ fun LeaveRequestScreen(
                 ) {
                     Checkbox(
                         checked = isHalfDay,
-                        onCheckedChange = { isHalfDay = it },
+                        onCheckedChange = { checked ->
+                            isHalfDay = checked
+                            if (checked) {
+                                endDate = startDate
+                            }
+                        },
                         colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
                     )
                     Spacer(modifier = Modifier.width(Spacing.xs))

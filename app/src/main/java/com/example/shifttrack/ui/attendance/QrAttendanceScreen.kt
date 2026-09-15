@@ -45,6 +45,18 @@ fun QrAttendanceScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val actionState by viewModel.actionState.collectAsState()
 
+    val analyzer = remember {
+        QrCodeAnalyzer { qrData ->
+            viewModel.performQrClockIn(qrData)
+        }
+    }
+
+    LaunchedEffect(actionState) {
+        if (actionState is AttendanceActionState.Idle) {
+            analyzer.resumeScanning()
+        }
+    }
+
     var hasCameraPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
@@ -58,6 +70,7 @@ fun QrAttendanceScreen(
     }
 
     fun handleBack() {
+        analyzer.pauseScanning()
         viewModel.resetActionState()
         onNavigateBack()
     }
@@ -113,10 +126,6 @@ fun QrAttendanceScreen(
                             val cameraProvider = cameraProviderFuture.get()
                             val preview = Preview.Builder().build().also {
                                 it.surfaceProvider = previewView.surfaceProvider
-                            }
-
-                            val analyzer = QrCodeAnalyzer { qrData ->
-                                viewModel.performQrClockIn(qrData)
                             }
 
                             val imageAnalysis = ImageAnalysis.Builder()
@@ -265,7 +274,10 @@ fun QrAttendanceScreen(
                 }
                 is AttendanceActionState.Error -> {
                     AlertDialog(
-                        onDismissRequest = { viewModel.resetActionState() },
+                        onDismissRequest = {
+                            viewModel.resetActionState()
+                            analyzer.resumeScanning()
+                        },
                         icon = {
                             Icon(
                                 imageVector = Icons.Default.ErrorOutline,
@@ -281,7 +293,10 @@ fun QrAttendanceScreen(
                             Text(state.message, style = MaterialTheme.typography.bodyMedium)
                         },
                         confirmButton = {
-                            Button(onClick = { viewModel.resetActionState() }) {
+                            Button(onClick = {
+                                viewModel.resetActionState()
+                                analyzer.resumeScanning()
+                            }) {
                                 Text("Scan Again")
                             }
                         }

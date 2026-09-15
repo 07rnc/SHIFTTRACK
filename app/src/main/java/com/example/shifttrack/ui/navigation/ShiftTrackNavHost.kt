@@ -50,7 +50,25 @@ fun ShiftTrackNavHost(
     val leaveViewModel = remember { LeaveViewModel(app.leaveRepository) }
     val notificationViewModel = remember { NotificationViewModel(app.notificationRepository) }
 
-    val startDestination = if (app.sessionManager.hasValidToken()) Screen.Home.route else Screen.Login.route
+    val isAuthenticated = app.sessionManager.hasValidToken()
+    val validAuthenticatedRoutes = listOf(
+        Screen.Home.route,
+        Screen.GpsAttendance.route,
+        Screen.QrAttendance.route,
+        Screen.AttendanceHistory.route,
+        Screen.LeaveRequest.route,
+        Screen.LeaveHistory.route,
+        Screen.NotificationHistory.route,
+        Screen.Profile.route
+    )
+
+    val resolvedStartDestination = if (!isAuthenticated) {
+        Screen.Login.route
+    } else if (!initialRoute.isNullOrBlank() && initialRoute in validAuthenticatedRoutes) {
+        initialRoute
+    } else {
+        Screen.Home.route
+    }
 
     val bottomBarScreens = listOf(
         Screen.Home.route,
@@ -150,7 +168,7 @@ fun ShiftTrackNavHost(
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = initialRoute ?: startDestination,
+            startDestination = resolvedStartDestination,
             modifier = Modifier.padding(padding)
         ) {
             composable(Screen.Login.route) {
@@ -228,8 +246,14 @@ fun ShiftTrackNavHost(
                     onNavigateBack = { navController.popBackStack() },
                     onNotificationClick = { route ->
                         when (route) {
-                            "leave_history" -> navController.navigate(Screen.LeaveHistory.route)
-                            "home" -> navController.navigate(Screen.Home.route)
+                            Screen.LeaveHistory.route, "leave_history" -> navController.navigate(Screen.LeaveHistory.route)
+                            Screen.AttendanceHistory.route, "attendance_history" -> navController.navigate(Screen.AttendanceHistory.route)
+                            Screen.LeaveRequest.route, "leave_request" -> navController.navigate(Screen.LeaveRequest.route)
+                            Screen.GpsAttendance.route, "gps_attendance" -> navController.navigate(Screen.GpsAttendance.route)
+                            Screen.QrAttendance.route, "qr_attendance" -> navController.navigate(Screen.QrAttendance.route)
+                            Screen.Profile.route, "profile" -> navController.navigate(Screen.Profile.route)
+                            Screen.NotificationHistory.route, "notifications", "notification_history" -> navController.navigate(Screen.NotificationHistory.route)
+                            Screen.Home.route, "home" -> navController.navigate(Screen.Home.route)
                             else -> {}
                         }
                     }

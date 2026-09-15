@@ -53,14 +53,27 @@ class SessionManager(context: Context) {
         _isLoggedIn.value = false
     }
 
+    fun sanitizeServerUrl(rawUrl: String): String {
+        var clean = rawUrl.trim()
+        if (clean.isBlank()) return DEFAULT_URL
+        if (!clean.startsWith("http://", ignoreCase = true) && !clean.startsWith("https://", ignoreCase = true)) {
+            clean = "http://$clean"
+        }
+        if (!clean.endsWith("/")) {
+            clean = "$clean/"
+        }
+        return clean
+    }
+
     fun setServerUrl(url: String) {
-        val cleanUrl = if (!url.endsWith("/")) "$url/" else url
+        val cleanUrl = sanitizeServerUrl(url)
         prefs.edit().putString(KEY_SERVER_URL, cleanUrl).apply()
         _serverUrl.value = cleanUrl
     }
 
     fun getServerUrl(): String {
-        return prefs.getString(KEY_SERVER_URL, DEFAULT_URL) ?: DEFAULT_URL
+        val stored = prefs.getString(KEY_SERVER_URL, DEFAULT_URL) ?: DEFAULT_URL
+        return sanitizeServerUrl(stored)
     }
 
     fun saveDeviceToken(token: String) {

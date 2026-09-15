@@ -36,8 +36,9 @@ class ApiClient(
             .writeTimeout(20, TimeUnit.SECONDS)
             .build()
 
+        val safeUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
         return Retrofit.Builder()
-            .baseUrl(baseUrl)
+            .baseUrl(safeUrl)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

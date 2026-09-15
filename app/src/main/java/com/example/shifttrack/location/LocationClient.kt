@@ -40,16 +40,19 @@ class LocationClient(private val context: Context) {
             fusedClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cts.token)
                 .addOnSuccessListener { location: Location? ->
                     if (location != null) {
-                        continuation.resume(
-                            LocationResult.Success(
-                                latitude = location.latitude,
-                                longitude = location.longitude,
-                                accuracy = location.accuracy
+                        if (continuation.isActive) {
+                            continuation.resume(
+                                LocationResult.Success(
+                                    latitude = location.latitude,
+                                    longitude = location.longitude,
+                                    accuracy = location.accuracy
+                                )
                             )
-                        )
+                        }
                     } else {
                         // Fallback to last known location
                         fusedClient.lastLocation.addOnSuccessListener { lastLoc: Location? ->
+                            if (!continuation.isActive) return@addOnSuccessListener
                             if (lastLoc != null) {
                                 continuation.resume(
                                     LocationResult.Success(
@@ -64,12 +67,16 @@ class LocationClient(private val context: Context) {
                                 )
                             }
                         }.addOnFailureListener {
-                            continuation.resume(LocationResult.Error(it.message ?: "Failed to acquire location"))
+                            if (continuation.isActive) {
+                                continuation.resume(LocationResult.Error(it.message ?: "Failed to acquire location"))
+                            }
                         }
                     }
                 }
                 .addOnFailureListener {
-                    continuation.resume(LocationResult.Error(it.message ?: "Location request failed"))
+                    if (continuation.isActive) {
+                        continuation.resume(LocationResult.Error(it.message ?: "Location request failed"))
+                    }
                 }
 
             continuation.invokeOnCancellation {

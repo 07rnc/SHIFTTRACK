@@ -63,6 +63,10 @@ class LeaveViewModel(
             _submitState.value = LeaveSubmitState.Error("Start date cannot be after end date")
             return
         }
+        if (isHalfDay && startDate != endDate) {
+            _submitState.value = LeaveSubmitState.Error("Half-day leave must be for a single date")
+            return
+        }
         if (reason.trim().length < 5) {
             _submitState.value = LeaveSubmitState.Error("Please provide a detailed reason (at least 5 characters)")
             return
