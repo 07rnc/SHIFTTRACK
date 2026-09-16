@@ -13,6 +13,7 @@ interface AuthRepository {
     suspend fun login(identifier: String, password: String): Result<UserDto>
     suspend fun logout(): Result<Unit>
     suspend fun getProfile(): Result<UserDto>
+    suspend fun register(fullName: String, email: String, password: String): Result<Unit>
 }
 
 class AuthRepositoryImpl(
@@ -83,5 +84,16 @@ class AuthRepositoryImpl(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun register(fullName: String, email: String, password: String): Result<Unit> {
+        if (AppConfig.USE_MOCK_DATA) {
+            return mockDataStore.register(fullName, email, password)
+        }
+        // Backend registration endpoint not yet implemented.
+        // Return a clear error so the UI can surface a helpful message.
+        return Result.failure(
+            Exception("Self-registration is not yet available. Please contact your administrator to create your account.")
+        )
     }
 }

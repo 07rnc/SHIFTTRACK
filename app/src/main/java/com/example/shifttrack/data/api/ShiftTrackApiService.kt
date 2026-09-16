@@ -9,6 +9,9 @@ interface ShiftTrackApiService {
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<ApiResponse<LoginResponse>>
 
+    @POST("api/auth/register")
+    suspend fun register(@Body request: RegisterRequest): Response<ApiResponse<RegisterResponse>>
+
     @POST("api/auth/refresh")
     suspend fun refreshToken(@Body request: RefreshTokenRequest): Response<ApiResponse<RefreshTokenResponse>>
 

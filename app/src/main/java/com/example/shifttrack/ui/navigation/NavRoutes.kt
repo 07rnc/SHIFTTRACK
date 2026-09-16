@@ -2,6 +2,7 @@ package com.example.shifttrack.ui.navigation
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
+    object Register : Screen("register")
     object Home : Screen("home")
     object GpsAttendance : Screen("gps_attendance")
     object QrAttendance : Screen("qr_attendance")

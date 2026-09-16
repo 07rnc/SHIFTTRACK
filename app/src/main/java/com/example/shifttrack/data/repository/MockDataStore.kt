@@ -199,6 +199,16 @@ class MockDataStore(private val sessionManager: SessionManager) {
         return Result.success(user)
     }
 
+    /**
+     * Mock registration — simulates network latency and returns success.
+     * Does NOT create a real account or mutate any session state.
+     * Real registration must be handled by the backend; this is UI scaffolding only.
+     */
+    suspend fun register(fullName: String, email: String, password: String): Result<Unit> {
+        delay(800)
+        return Result.success(Unit)
+    }
+
     // SHIFT
     suspend fun getCurrentShift(): Result<ShiftDto?> {
         delay(400)

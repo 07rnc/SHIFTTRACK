@@ -32,17 +32,23 @@ import com.example.shifttrack.ui.theme.*
 @Composable
 fun LoginScreen(
     viewModel: AuthViewModel,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onNavigateRegister: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val serverUrl by viewModel.serverUrl.collectAsState()
     val focusManager = LocalFocusManager.current
 
-    var identifier by remember { mutableStateOf("alex.chen@shifttrack.com") }
-    var password by remember { mutableStateOf("ShiftTrackPass123") }
+    var identifier by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var showServerConfig by remember { mutableStateOf(false) }
     var editableServerUrl by remember { mutableStateOf(serverUrl) }
+
+    // Clear any stale error from a previous session on screen entry
+    LaunchedEffect(Unit) {
+        viewModel.clearError()
+    }
 
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
@@ -206,6 +212,21 @@ fun LoginScreen(
                         text = "Use Demo Account (Alex Chen • ST-0104)",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.xs))
+
+                // Navigate to Registration
+                TextButton(
+                    onClick = onNavigateRegister,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(
+                        text = "Don't have an account? Create one",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                 }

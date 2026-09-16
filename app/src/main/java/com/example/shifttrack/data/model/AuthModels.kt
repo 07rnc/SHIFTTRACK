@@ -23,6 +23,16 @@ data class RefreshTokenResponse(
     @SerializedName("refreshToken") val refreshToken: String? = null
 )
 
+data class RegisterRequest(
+    @SerializedName("fullName") val fullName: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("password") val password: String
+)
+
+data class RegisterResponse(
+    @SerializedName("message") val message: String = "Registration successful"
+)
+
 data class UserDto(
     @SerializedName("id") val id: String,
     @SerializedName("email") val email: String,

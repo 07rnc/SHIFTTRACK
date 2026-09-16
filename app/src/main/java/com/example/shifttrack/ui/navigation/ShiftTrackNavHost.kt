@@ -1,5 +1,7 @@
-package com.example.shifttrack.ui.navigation
+﻿package com.example.shifttrack.ui.navigation
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -22,6 +24,8 @@ import com.example.shifttrack.ui.notifications.*
 import com.example.shifttrack.ui.profile.*
 import com.example.shifttrack.ui.theme.*
 
+private const val NAV_ANIM_DURATION = 280
+
 @Composable
 fun ShiftTrackNavHost(
     app: ShiftTrackApp,
@@ -32,6 +36,7 @@ fun ShiftTrackNavHost(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val authViewModel = remember { AuthViewModel(app.authRepository, app.sessionManager) }
+    val registerViewModel = remember { RegisterViewModel(app.authRepository) }
     val homeViewModel = remember {
         HomeViewModel(
             app.authRepository,
@@ -169,16 +174,96 @@ fun ShiftTrackNavHost(
         NavHost(
             navController = navController,
             startDestination = resolvedStartDestination,
-            modifier = Modifier.padding(padding)
+            modifier = Modifier.padding(padding),
+            // Login → Home: fade only (no slide) to avoid layout jump
+            enterTransition = { fadeIn(animationSpec = tween(NAV_ANIM_DURATION)) },
+            exitTransition = { fadeOut(animationSpec = tween(NAV_ANIM_DURATION)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(NAV_ANIM_DURATION)) },
+            popExitTransition = { fadeOut(animationSpec = tween(NAV_ANIM_DURATION)) }
         ) {
-            composable(Screen.Login.route) {
+            // Login — slide horizontally within auth flow; fade to/from Home
+            composable(
+                route = Screen.Login.route,
+                enterTransition = {
+                    if (initialState.destination.route == Screen.Register.route) {
+                        slideInHorizontally(
+                            initialOffsetX = { -it },
+                            animationSpec = tween(NAV_ANIM_DURATION)
+                        )
+                    } else {
+                        fadeIn(animationSpec = tween(NAV_ANIM_DURATION))
+                    }
+                },
+                exitTransition = {
+                    if (targetState.destination.route == Screen.Register.route) {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = tween(NAV_ANIM_DURATION)
+                        )
+                    } else {
+                        fadeOut(animationSpec = tween(NAV_ANIM_DURATION))
+                    }
+                },
+                popEnterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { -it },
+                        animationSpec = tween(NAV_ANIM_DURATION)
+                    )
+                },
+                popExitTransition = {
+                    fadeOut(animationSpec = tween(NAV_ANIM_DURATION))
+                }
+            ) {
                 LoginScreen(
                     viewModel = authViewModel,
                     onLoginSuccess = {
-                        homeViewModel.loadData(isRefresh = true)
+                        // Do NOT pre-load data here — HomeScreen's LifecycleEventEffect
+                        // (ON_RESUME) calls loadData() automatically when the screen appears.
+                        // Double-calling here during the nav animation was the source of lag.
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
+                    },
+                    onNavigateRegister = {
+                        navController.navigate(Screen.Register.route)
+                    }
+                )
+            }
+
+            // Register — slides in from the right of Login
+            composable(
+                route = Screen.Register.route,
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(NAV_ANIM_DURATION)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(NAV_ANIM_DURATION)
+                    )
+                },
+                popEnterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(NAV_ANIM_DURATION)
+                    )
+                },
+                popExitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(NAV_ANIM_DURATION)
+                    )
+                }
+            ) {
+                RegisterScreen(
+                    viewModel = registerViewModel,
+                    onNavigateSignIn = { navController.popBackStack() },
+                    onRegistrationSuccess = {
+                        // Pop back to Login so the user can sign in with their new credentials
+                        navController.popBackStack()
                     }
                 )
             }
