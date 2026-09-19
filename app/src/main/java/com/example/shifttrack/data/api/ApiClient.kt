@@ -1,5 +1,6 @@
 package com.example.shifttrack.data.api
 
+import com.example.shifttrack.BuildConfig
 import com.example.shifttrack.data.local.SessionManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -25,7 +26,12 @@ class ApiClient(
 
     private fun createService(baseUrl: String): ShiftTrackApiService {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            // BODY level in debug only — prevents auth token leakage to Logcat in production
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
         }
 
         val okHttpClient = OkHttpClient.Builder()

@@ -64,9 +64,14 @@ object ShiftTrackTheme {
 
 @Composable
 fun SHIFTTRACKTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themePreference: String = "SYSTEM",
     content: @Composable () -> Unit
 ) {
+    val darkTheme = when (themePreference) {
+        "LIGHT" -> false
+        "DARK" -> true
+        else -> isSystemInDarkTheme() // "SYSTEM" or any unrecognised value
+    }
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
     val statusColors = if (darkTheme) DarkStatusColors else LightStatusColors
 

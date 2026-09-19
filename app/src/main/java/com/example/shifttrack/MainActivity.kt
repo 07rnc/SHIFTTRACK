@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -23,7 +24,8 @@ class MainActivity : ComponentActivity() {
         activeRoute = intent.getStringExtra("NAV_ROUTE")
 
         setContent {
-            SHIFTTRACKTheme {
+            val themePref by app.sessionManager.themePref.collectAsState()
+            SHIFTTRACKTheme(themePreference = themePref) {
                 ShiftTrackNavHost(
                     app = app,
                     initialRoute = activeRoute

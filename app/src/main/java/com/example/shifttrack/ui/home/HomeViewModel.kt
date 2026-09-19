@@ -35,7 +35,9 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        loadData()
+        // Do NOT call loadData() here — HomeScreen's LifecycleEventEffect(ON_RESUME)
+        // triggers loadData() immediately when the screen enters composition.
+        // Calling it here would cause a duplicate API call on every first visit.
         listenToLiveEvents()
     }
 

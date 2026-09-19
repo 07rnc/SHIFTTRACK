@@ -3,8 +3,9 @@ package com.example.shifttrack.ui.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -14,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.shifttrack.data.api.AppConfig
@@ -34,9 +36,17 @@ fun ProfileScreen(
     val coroutineScope = rememberCoroutineScope()
     val user by authRepository.currentUser.collectAsState()
     val serverUrl by sessionManager.serverUrl.collectAsState()
+    val currentThemePref by sessionManager.themePref.collectAsState()
 
     var showLogoutDialog by remember { mutableStateOf(false) }
     var useMockMode by remember { mutableStateOf(AppConfig.USE_MOCK_DATA) }
+
+    // Theme options: displayed label → stored constant
+    val themeOptions = listOf(
+        "Light" to SessionManager.THEME_LIGHT,
+        "Dark" to SessionManager.THEME_DARK,
+        "System Default" to SessionManager.THEME_SYSTEM
+    )
 
     Scaffold(
         topBar = {
@@ -113,6 +123,74 @@ fun ProfileScreen(
 
                     ProfileDetailRow("Department", user?.department ?: "Engineering & Operations")
                     ProfileDetailRow("Role", user?.role ?: "EMPLOYEE")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.lg))
+
+            // ── Appearance / Theme Selection Card ────────────────────────────────
+            ShiftTrackCard(elevation = 1.dp) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Palette,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.sm))
+                    Text(
+                        text = "Appearance",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.xs))
+
+                Text(
+                    text = "Choose how ShiftTrack looks on this device",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.md))
+
+                Column(modifier = Modifier.selectableGroup()) {
+                    themeOptions.forEach { (label, value) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = currentThemePref == value,
+                                    onClick = { sessionManager.setThemePref(value) },
+                                    role = Role.RadioButton
+                                )
+                                .padding(vertical = Spacing.sm),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = currentThemePref == value,
+                                onClick = null, // handled by parent selectable
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = MaterialTheme.colorScheme.primary,
+                                    unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(Spacing.md))
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (currentThemePref == value)
+                                    MaterialTheme.colorScheme.onSurface
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = if (currentThemePref == value) FontWeight.SemiBold else FontWeight.Normal
+                            )
+                        }
+                    }
                 }
             }
 

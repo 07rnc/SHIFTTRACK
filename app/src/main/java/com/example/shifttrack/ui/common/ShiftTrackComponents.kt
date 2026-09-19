@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -17,11 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.shifttrack.data.model.BackendLeaveStatus
 import com.example.shifttrack.ui.theme.*
 
@@ -207,8 +204,10 @@ fun StatusBadge(
             Pair(statusColors.success, if (status == BackendLeaveStatus.APPROVED) "Approved" else if (status == "ON_TIME") "On Time" else "Completed")
         "LATE", BackendLeaveStatus.PENDING, "SCHEDULED" -> 
             Pair(statusColors.warning, if (status == BackendLeaveStatus.PENDING) "Pending Approval" else if (status == "LATE") "Late" else "Scheduled")
-        "ABSENT", "EARLY_DEPARTURE", BackendLeaveStatus.REJECTED, BackendLeaveStatus.DENIED -> 
-            Pair(statusColors.error, if (status == BackendLeaveStatus.REJECTED || status == BackendLeaveStatus.DENIED) "Rejected" else "Early Departure")
+        "ABSENT" ->
+            Pair(statusColors.error, "Absent")
+        "EARLY_DEPARTURE", BackendLeaveStatus.REJECTED, BackendLeaveStatus.DENIED ->
+            Pair(statusColors.error, if (status == "EARLY_DEPARTURE") "Early Departure" else "Rejected")
         "CLOCKED_IN", "IN_PROGRESS" -> 
             Pair(statusColors.info, if (status == "CLOCKED_IN") "Clocked In" else "In Progress")
         "CLOCKED_OUT" -> 
@@ -281,8 +280,8 @@ fun EmptyStateView(
 @Composable
 fun ErrorBanner(
     message: String,
-    onRetry: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRetry: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier
