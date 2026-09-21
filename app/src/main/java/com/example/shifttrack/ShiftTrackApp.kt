@@ -60,17 +60,25 @@ class ShiftTrackApp : Application() {
         // Create notification channels
         NotificationHelper.createNotificationChannel(this)
 
-        // Initialize Firebase if available
+        // Initialize Firebase if configured; fail gracefully if google-services.json is absent
         try {
-            FirebaseApp.initializeApp(this)
-            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                if (task.isSuccessful && !task.result.isNullOrBlank()) {
-                    val token = task.result
-                    sessionManager.saveDeviceToken(token)
+            val app = FirebaseApp.initializeApp(this)
+            if (app != null) {
+                FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                    if (task.isSuccessful && !task.result.isNullOrBlank()) {
+                        val token = task.result
+                        sessionManager.saveDeviceToken(token)
+                    } else {
+                        android.util.Log.i("ShiftTrackApp", "FCM token registration unavailable: ${task.exception?.message ?: "not returned"}")
+                    }
                 }
+            } else {
+                android.util.Log.w("ShiftTrackApp", "Firebase not initialized: Default FirebaseApp options not found (google-services.json is not present). Push notifications will be disabled; local and in-app alerts remain active.")
             }
+        } catch (e: IllegalStateException) {
+            android.util.Log.w("ShiftTrackApp", "Firebase configuration required for push notifications: google-services.json is missing. The app is running normally with local in-app alerts.")
         } catch (e: Exception) {
-            // Handled gracefully in mock / local environments
+            android.util.Log.w("ShiftTrackApp", "FCM initialization skipped: ${e.message ?: "Unknown error"}. App continues in standalone notification mode.")
         }
     }
 

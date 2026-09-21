@@ -220,34 +220,36 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.md))
 
-                // Mock mode toggle (per Section 19 of requirements)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Standalone Mock Mode",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "Simulate backend offline while server is being deployed",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                // Mock mode toggle (Debug only, disabled in release builds for security)
+                if (com.example.shifttrack.BuildConfig.DEBUG) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Standalone Mock Mode",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Simulate backend offline while server is being deployed (Debug only)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = useMockMode,
+                            onCheckedChange = {
+                                useMockMode = it
+                                AppConfig.USE_MOCK_DATA = it
+                            }
                         )
                     }
-                    Switch(
-                        checked = useMockMode,
-                        onCheckedChange = {
-                            useMockMode = it
-                            AppConfig.USE_MOCK_DATA = it
-                        }
-                    )
-                }
 
-                Spacer(modifier = Modifier.height(Spacing.md))
+                    Spacer(modifier = Modifier.height(Spacing.md))
+                }
 
                 val deviceToken = sessionManager.getDeviceToken()
                 Text(

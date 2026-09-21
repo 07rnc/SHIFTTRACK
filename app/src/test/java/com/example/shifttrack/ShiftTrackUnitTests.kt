@@ -1,10 +1,11 @@
 package com.example.shifttrack
 
+import com.example.shifttrack.data.api.AppConfig
 import com.example.shifttrack.data.model.*
 import com.example.shifttrack.data.repository.MockDataStore
 import com.example.shifttrack.data.local.SessionManager
 import io.mockk.*
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -31,8 +32,8 @@ class ShiftTrackUnitTests {
     // ==================== AUTH TESTS ====================
 
     @Test
-    fun testLogin_Success() = runBlocking {
-        val result = mockDataStore.login("alex.chen@shifttrack.com", "validPass123")
+    fun testLogin_Success() = runTest {
+        val result = mockDataStore.login("alex.chen@shifttrack.com", AppConfig.DEMO_PASSWORD)
         assertTrue(result.isSuccess)
         val user = result.getOrNull()
         assertNotNull(user)
@@ -43,14 +44,28 @@ class ShiftTrackUnitTests {
     }
 
     @Test
-    fun testLogin_BlankCredentials_Fails() = runBlocking {
+    fun testLogin_InvalidPassword_Fails() = runTest {
+        val result = mockDataStore.login("alex.chen@shifttrack.com", "WrongPassword123")
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull()?.message?.contains("Invalid password", ignoreCase = true) == true)
+    }
+
+    @Test
+    fun testLogin_UnknownEmployee_Fails() = runTest {
+        val result = mockDataStore.login("unknown.user@shifttrack.com", AppConfig.DEMO_PASSWORD)
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull()?.message?.contains("No employee found", ignoreCase = true) == true)
+    }
+
+    @Test
+    fun testLogin_BlankCredentials_Fails() = runTest {
         val result = mockDataStore.login("", "")
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull()?.message?.contains("required", ignoreCase = true) == true)
     }
 
     @Test
-    fun testLogout_ClearsSession() = runBlocking {
+    fun testLogout_ClearsSession() = runTest {
         val result = mockDataStore.logout()
         assertTrue(result.isSuccess)
         verify { sessionManager.clearSession() }
@@ -59,7 +74,7 @@ class ShiftTrackUnitTests {
     // ==================== SHIFT TESTS ====================
 
     @Test
-    fun testGetCurrentShift_ReturnsAssignedShift() = runBlocking {
+    fun testGetCurrentShift_ReturnsAssignedShift() = runTest {
         val result = mockDataStore.getCurrentShift()
         assertTrue(result.isSuccess)
         val shift = result.getOrNull()
@@ -72,7 +87,7 @@ class ShiftTrackUnitTests {
     // ==================== ATTENDANCE TESTS ====================
 
     @Test
-    fun testClockIn_GPS_Success() = runBlocking {
+    fun testClockIn_GPS_Success() = runTest {
         // Clock in near office headquarters
         val result = mockDataStore.clockInGps(28.6139, 77.2090, 10.0f)
         assertTrue(result.isSuccess)
@@ -87,7 +102,7 @@ class ShiftTrackUnitTests {
     }
 
     @Test
-    fun testClockIn_DuplicatePrevention_RejectsSecondClockIn() = runBlocking {
+    fun testClockIn_DuplicatePrevention_RejectsSecondClockIn() = runTest {
         // First clock-in
         val first = mockDataStore.clockInGps(28.6139, 77.2090, 10.0f)
         assertTrue(first.isSuccess)
@@ -99,21 +114,21 @@ class ShiftTrackUnitTests {
     }
 
     @Test
-    fun testClockIn_QR_ValidCode_Success() = runBlocking {
+    fun testClockIn_QR_ValidCode_Success() = runTest {
         val result = mockDataStore.clockInQr("SHIFTTRACK-OFFICE-MAIN-ENTRANCE-101")
         assertTrue(result.isSuccess)
         assertEquals("QR", result.getOrNull()?.method)
     }
 
     @Test
-    fun testClockIn_QR_InvalidCode_RejectsAuthoritatively() = runBlocking {
+    fun testClockIn_QR_InvalidCode_RejectsAuthoritatively() = runTest {
         val result = mockDataStore.clockInQr("RANDOM_EXTERNAL_BARCODE_XYZ")
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull()?.message?.contains("Invalid QR code", ignoreCase = true) == true)
     }
 
     @Test
-    fun testClockOut_Success() = runBlocking {
+    fun testClockOut_Success() = runTest {
         // Must clock in first
         mockDataStore.clockInGps(28.6139, 77.2090, 10.0f)
 
@@ -128,7 +143,7 @@ class ShiftTrackUnitTests {
     }
 
     @Test
-    fun testAttendanceHistory_ReturnsRecords() = runBlocking {
+    fun testAttendanceHistory_ReturnsRecords() = runTest {
         val historyRes = mockDataStore.getAttendanceHistory()
         assertTrue(historyRes.isSuccess)
         val history = historyRes.getOrNull()
@@ -139,7 +154,7 @@ class ShiftTrackUnitTests {
     // ==================== LEAVE TESTS ====================
 
     @Test
-    fun testLeaveSubmission_Success_PreservesBackendPendingStatus() = runBlocking {
+    fun testLeaveSubmission_Success_PreservesBackendPendingStatus() = runTest {
         val req = LeaveRequestDto(
             leaveType = "SICK",
             startDate = "2026-10-01",
@@ -157,7 +172,7 @@ class ShiftTrackUnitTests {
     }
 
     @Test
-    fun testLeaveSubmission_InvalidDateRange_Rejects() = runBlocking {
+    fun testLeaveSubmission_InvalidDateRange_Rejects() = runTest {
         val req = LeaveRequestDto(
             leaveType = "CASUAL",
             startDate = "2026-10-10",
@@ -170,7 +185,7 @@ class ShiftTrackUnitTests {
     }
 
     @Test
-    fun testLeaveSubmission_EmptyReason_Rejects() = runBlocking {
+    fun testLeaveSubmission_EmptyReason_Rejects() = runTest {
         val req = LeaveRequestDto(
             leaveType = "CASUAL",
             startDate = "2026-10-01",
@@ -183,7 +198,7 @@ class ShiftTrackUnitTests {
     }
 
     @Test
-    fun testLeaveHistory_PreservesExactBackendStatuses() = runBlocking {
+    fun testLeaveHistory_PreservesExactBackendStatuses() = runTest {
         val historyRes = mockDataStore.getLeaveHistory()
         assertTrue(historyRes.isSuccess)
         val history = historyRes.getOrNull()
@@ -199,7 +214,7 @@ class ShiftTrackUnitTests {
     // ==================== NOTIFICATIONS TESTS ====================
 
     @Test
-    fun testNotifications_FetchAndMarkAsRead() = runBlocking {
+    fun testNotifications_FetchAndMarkAsRead() = runTest {
         val notifRes = mockDataStore.getNotifications()
         assertTrue(notifRes.isSuccess)
         val list = notifRes.getOrNull()
@@ -217,7 +232,7 @@ class ShiftTrackUnitTests {
     // ==================== EDGE CASES & DOMAIN VALIDATION TESTS ====================
 
     @Test
-    fun testLeaveSubmission_SingleDay_CalculatesOneDay() = runBlocking {
+    fun testLeaveSubmission_SingleDay_CalculatesOneDay() = runTest {
         val req = LeaveRequestDto(
             leaveType = "CASUAL",
             startDate = "2026-10-05",
@@ -231,7 +246,7 @@ class ShiftTrackUnitTests {
     }
 
     @Test
-    fun testLeaveSubmission_MultiDay_CalculatesAccurateDays() = runBlocking {
+    fun testLeaveSubmission_MultiDay_CalculatesAccurateDays() = runTest {
         val req = LeaveRequestDto(
             leaveType = "ANNUAL",
             startDate = "2026-10-01",
@@ -245,7 +260,7 @@ class ShiftTrackUnitTests {
     }
 
     @Test
-    fun testLeaveSubmission_HalfDay_CalculatesHalfDay() = runBlocking {
+    fun testLeaveSubmission_HalfDay_CalculatesHalfDay() = runTest {
         val req = LeaveRequestDto(
             leaveType = "CASUAL",
             startDate = "2026-10-05",
@@ -259,7 +274,7 @@ class ShiftTrackUnitTests {
     }
 
     @Test
-    fun testLeaveSubmission_HalfDay_MultiDate_Rejects() = runBlocking {
+    fun testLeaveSubmission_HalfDay_MultiDate_Rejects() = runTest {
         val req = LeaveRequestDto(
             leaveType = "CASUAL",
             startDate = "2026-10-01",

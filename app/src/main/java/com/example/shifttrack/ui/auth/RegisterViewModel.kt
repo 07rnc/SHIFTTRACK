@@ -1,4 +1,4 @@
-﻿package com.example.shifttrack.ui.auth
+package com.example.shifttrack.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -63,5 +63,9 @@ class RegisterViewModel(
         if (_uiState.value is RegisterUiState.Error) {
             _uiState.value = RegisterUiState.Idle
         }
+    }
+
+    fun resetState() {
+        _uiState.value = RegisterUiState.Idle
     }
 }

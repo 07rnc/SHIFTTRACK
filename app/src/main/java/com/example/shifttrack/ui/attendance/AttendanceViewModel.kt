@@ -35,19 +35,15 @@ class AttendanceViewModel(
     private val _historyLoading = MutableStateFlow(false)
     val historyLoading: StateFlow<Boolean> = _historyLoading.asStateFlow()
 
-    private val _currentState = MutableStateFlow<AttendanceStateResponse?>(null)
-    val currentState: StateFlow<AttendanceStateResponse?> = _currentState.asStateFlow()
+    val currentState: StateFlow<AttendanceStateResponse?> = attendanceRepository.currentAttendanceState
 
     init {
         loadAttendanceState()
-        loadHistory()
     }
 
     fun loadAttendanceState() {
         viewModelScope.launch {
-            attendanceRepository.getAttendanceState().onSuccess {
-                _currentState.value = it
-            }
+            attendanceRepository.getAttendanceState()
         }
     }
 

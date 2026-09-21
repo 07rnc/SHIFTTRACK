@@ -39,6 +39,9 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -65,12 +68,11 @@ dependencies {
     // Location
     implementation(libs.play.services.location)
 
-    // CameraX & Barcode Scanning
+    // CameraX
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
-    implementation(libs.play.services.mlkit.barcode.scanning)
 
     // WebSocket / Socket.IO
     implementation(libs.socket.io.client)

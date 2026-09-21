@@ -203,7 +203,7 @@ fun GpsAttendanceScreen(
                             }
                             Spacer(modifier = Modifier.height(Spacing.xxs))
                             Text(
-                                text = "Allowed Radius: 200 meters around office site",
+                                text = "Allowed Radius: ${AppConfig.DEMO_OFFICE_RADIUS_METERS.toInt()} meters around office site",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

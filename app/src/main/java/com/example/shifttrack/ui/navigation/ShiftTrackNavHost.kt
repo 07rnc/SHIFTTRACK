@@ -1,4 +1,4 @@
-﻿package com.example.shifttrack.ui.navigation
+package com.example.shifttrack.ui.navigation
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
@@ -37,25 +37,12 @@ fun ShiftTrackNavHost(
 
     val authViewModel = remember { AuthViewModel(app.authRepository, app.sessionManager) }
     val registerViewModel = remember { RegisterViewModel(app.authRepository) }
-    val homeViewModel = remember {
-        HomeViewModel(
-            app.authRepository,
-            app.shiftRepository,
-            app.attendanceRepository,
-            app.notificationRepository,
-            app.webSocketManager
-        )
-    }
-    val attendanceViewModel = remember {
-        AttendanceViewModel(
-            app.attendanceRepository,
-            LocationClient(app)
-        )
-    }
-    val leaveViewModel = remember { LeaveViewModel(app.leaveRepository) }
-    val notificationViewModel = remember { NotificationViewModel(app.notificationRepository) }
 
     val isAuthenticated = app.sessionManager.hasValidToken()
+    val attendanceViewModel = remember(isAuthenticated) {
+        if (isAuthenticated) AttendanceViewModel(app.attendanceRepository, LocationClient(app)) else null
+    }
+
     val validAuthenticatedRoutes = listOf(
         Screen.Home.route,
         Screen.GpsAttendance.route,
@@ -67,12 +54,18 @@ fun ShiftTrackNavHost(
         Screen.Profile.route
     )
 
-    val resolvedStartDestination = if (!isAuthenticated) {
+    val stableStartDestination = if (!isAuthenticated) {
         Screen.Login.route
-    } else if (!initialRoute.isNullOrBlank() && initialRoute in validAuthenticatedRoutes) {
-        initialRoute
     } else {
         Screen.Home.route
+    }
+
+    LaunchedEffect(initialRoute, isAuthenticated) {
+        if (isAuthenticated && !initialRoute.isNullOrBlank() && initialRoute in validAuthenticatedRoutes) {
+            navController.navigate(initialRoute) {
+                launchSingleTop = true
+            }
+        }
     }
 
     val bottomBarScreens = listOf(
@@ -173,7 +166,7 @@ fun ShiftTrackNavHost(
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = resolvedStartDestination,
+            startDestination = stableStartDestination,
             modifier = Modifier.padding(padding),
             // Login → Home: fade only (no slide) to avoid layout jump
             enterTransition = { fadeIn(animationSpec = tween(NAV_ANIM_DURATION)) },
@@ -269,6 +262,16 @@ fun ShiftTrackNavHost(
             }
 
             composable(Screen.Home.route) {
+                val homeViewModel = remember {
+                    HomeViewModel(
+                        app.authRepository,
+                        app.shiftRepository,
+                        app.attendanceRepository,
+                        app.notificationRepository,
+                        app.webSocketManager,
+                        app.sessionManager
+                    )
+                }
                 HomeScreen(
                     viewModel = homeViewModel,
                     onNavigateGpsAttendance = { navController.navigate(Screen.GpsAttendance.route) },
@@ -281,8 +284,11 @@ fun ShiftTrackNavHost(
             }
 
             composable(Screen.GpsAttendance.route) {
+                val activeAttendanceVm = attendanceViewModel ?: remember {
+                    AttendanceViewModel(app.attendanceRepository, LocationClient(app))
+                }
                 GpsAttendanceScreen(
-                    viewModel = attendanceViewModel,
+                    viewModel = activeAttendanceVm,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateQrFallback = {
                         navController.popBackStack()
@@ -292,20 +298,27 @@ fun ShiftTrackNavHost(
             }
 
             composable(Screen.QrAttendance.route) {
+                val activeAttendanceVm = attendanceViewModel ?: remember {
+                    AttendanceViewModel(app.attendanceRepository, LocationClient(app))
+                }
                 QrAttendanceScreen(
-                    viewModel = attendanceViewModel,
+                    viewModel = activeAttendanceVm,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
             composable(Screen.AttendanceHistory.route) {
+                val activeAttendanceVm = attendanceViewModel ?: remember {
+                    AttendanceViewModel(app.attendanceRepository, LocationClient(app))
+                }
                 AttendanceHistoryScreen(
-                    viewModel = attendanceViewModel,
+                    viewModel = activeAttendanceVm,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
             composable(Screen.LeaveRequest.route) {
+                val leaveViewModel = remember { LeaveViewModel(app.leaveRepository) }
                 LeaveRequestScreen(
                     viewModel = leaveViewModel,
                     onNavigateBack = { navController.popBackStack() },
@@ -318,6 +331,7 @@ fun ShiftTrackNavHost(
             }
 
             composable(Screen.LeaveHistory.route) {
+                val leaveViewModel = remember { LeaveViewModel(app.leaveRepository) }
                 LeaveHistoryScreen(
                     viewModel = leaveViewModel,
                     onNavigateApplyLeave = { navController.navigate(Screen.LeaveRequest.route) },
@@ -326,6 +340,7 @@ fun ShiftTrackNavHost(
             }
 
             composable(Screen.NotificationHistory.route) {
+                val notificationViewModel = remember { NotificationViewModel(app.notificationRepository) }
                 NotificationHistoryScreen(
                     viewModel = notificationViewModel,
                     onNavigateBack = { navController.popBackStack() },

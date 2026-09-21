@@ -30,6 +30,10 @@ fun NotificationHistoryScreen(
     val notifications by viewModel.notifications.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.loadNotifications()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

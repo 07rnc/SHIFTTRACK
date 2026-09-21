@@ -30,10 +30,6 @@ class LeaveViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    init {
-        loadLeaveHistory()
-    }
-
     fun loadLeaveHistory() {
         _isLoading.value = true
         viewModelScope.launch {

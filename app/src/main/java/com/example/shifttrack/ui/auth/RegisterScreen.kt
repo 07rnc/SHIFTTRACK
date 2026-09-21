@@ -45,14 +45,15 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
-    // Reset state when entering screen so stale errors never show
+    // Reset state when entering screen so stale state never shows
     LaunchedEffect(Unit) {
-        viewModel.clearError()
+        viewModel.resetState()
     }
 
     // Navigate back to Sign In on success
     LaunchedEffect(uiState) {
         if (uiState is RegisterUiState.Success) {
+            viewModel.resetState()
             onRegistrationSuccess()
         }
     }

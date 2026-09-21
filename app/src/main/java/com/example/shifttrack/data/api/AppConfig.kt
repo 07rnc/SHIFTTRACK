@@ -1,12 +1,16 @@
 package com.example.shifttrack.data.api
 
+import com.example.shifttrack.BuildConfig
+
 object AppConfig {
     const val DEFAULT_BASE_URL = "http://10.0.2.2:5000/"
 
-    // In accordance with Section 19 of requirements:
-    // If backend endpoints are not live, Mock Mode provides reliable,
-    // backend-faithful local simulation. Toggled in Profile/Settings screen.
-    var USE_MOCK_DATA: Boolean = true
+    // In accordance with security requirements:
+    // Mock mode is strictly development-only and defaults to false in Release builds.
+    var USE_MOCK_DATA: Boolean = BuildConfig.DEBUG
+
+    // Standard demo credentials for debug/offline mode
+    const val DEMO_PASSWORD = "ShiftTrackPass123"
 
     // Standard geofence headquarters coordinates for demo and testing
     const val DEMO_OFFICE_LAT = 28.613939

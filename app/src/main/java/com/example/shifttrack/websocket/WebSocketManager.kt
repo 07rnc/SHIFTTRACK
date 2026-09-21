@@ -19,9 +19,14 @@ class WebSocketManager {
     private val _events = MutableSharedFlow<WebSocketEvent>(extraBufferCapacity = 64)
     val events: SharedFlow<WebSocketEvent> = _events.asSharedFlow()
 
+    fun isConnected(): Boolean = socket?.connected() == true
+
     fun connect(serverUrl: String, authToken: String?) {
         try {
             if (socket?.connected() == true) return
+            socket?.disconnect()
+            socket?.off()
+            socket = null
 
             val options = IO.Options().apply {
                 reconnection = true

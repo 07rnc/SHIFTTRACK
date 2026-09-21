@@ -45,13 +45,14 @@ fun LoginScreen(
     var showServerConfig by remember { mutableStateOf(false) }
     var editableServerUrl by remember { mutableStateOf(serverUrl) }
 
-    // Clear any stale error from a previous session on screen entry
+    // Clear any stale state from a previous session on screen entry
     LaunchedEffect(Unit) {
-        viewModel.clearError()
+        viewModel.resetState()
     }
 
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
+            viewModel.resetState()
             onLoginSuccess()
         }
     }

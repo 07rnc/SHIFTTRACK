@@ -19,10 +19,6 @@ class NotificationViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    init {
-        loadNotifications()
-    }
-
     fun loadNotifications() {
         _isLoading.value = true
         viewModelScope.launch {

@@ -177,7 +177,12 @@ class MockDataStore(private val sessionManager: SessionManager) {
         val user = mockEmployees.find {
             it.email.equals(identifier.trim(), ignoreCase = true) ||
             it.employeeCode.equals(identifier.trim(), ignoreCase = true)
-        } ?: mockEmployees.first() // Allow flexible test credentials
+        } ?: return Result.failure(Exception("Invalid credentials: No employee found matching '$identifier'"))
+
+        // Accept demo password or valid test credentials
+        if (pass != AppConfig.DEMO_PASSWORD && pass != "validPass123") {
+            return Result.failure(Exception("Invalid password. Please check your credentials."))
+        }
 
         sessionManager.saveSession(
             token = "mock_jwt_token_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
@@ -246,13 +251,17 @@ class MockDataStore(private val sessionManager: SessionManager) {
         // If distance is beyond 50,000 meters and not close to 0,0 (test devices), reject with authoritative distance
         // For testing convenience, if distance > 500 meters and accuracy is reasonable, report distance check
         // Or if lat, lng is within range
-        val nowTime = timeFormat.format(Date())
-        val isLate = nowTime > "09:15"
+        val nowDate = Date()
+        val nowTime = timeFormat.format(nowDate)
+        val cal = Calendar.getInstance().apply { time = nowDate }
+        val hour = cal.get(Calendar.HOUR_OF_DAY)
+        val minute = cal.get(Calendar.MINUTE)
+        val isLate = (hour > 9) || (hour == 9 && minute > 15)
 
         val record = AttendanceDto(
             id = "att_" + System.currentTimeMillis(),
             employeeId = sessionManager.currentUser.value?.id ?: "emp_101",
-            date = dateFormat.format(Date()),
+            date = dateFormat.format(nowDate),
             clockInTime = nowTime,
             clockOutTime = null,
             method = AttendanceMethod.GPS.name,
@@ -279,13 +288,17 @@ class MockDataStore(private val sessionManager: SessionManager) {
             return Result.failure(Exception("Invalid QR code: This QR code is not registered with ShiftTrack office"))
         }
 
-        val nowTime = timeFormat.format(Date())
-        val isLate = nowTime > "09:15"
+        val nowDate = Date()
+        val nowTime = timeFormat.format(nowDate)
+        val cal = Calendar.getInstance().apply { time = nowDate }
+        val hour = cal.get(Calendar.HOUR_OF_DAY)
+        val minute = cal.get(Calendar.MINUTE)
+        val isLate = (hour > 9) || (hour == 9 && minute > 15)
 
         val record = AttendanceDto(
             id = "att_" + System.currentTimeMillis(),
             employeeId = sessionManager.currentUser.value?.id ?: "emp_101",
-            date = dateFormat.format(Date()),
+            date = dateFormat.format(nowDate),
             clockInTime = nowTime,
             clockOutTime = null,
             method = AttendanceMethod.QR.name,
@@ -307,10 +320,27 @@ class MockDataStore(private val sessionManager: SessionManager) {
             return Result.failure(Exception("Cannot clock out: You are not currently clocked in"))
         }
 
-        val nowTime = timeFormat.format(Date())
+        val nowDate = Date()
+        val nowTime = timeFormat.format(nowDate)
+        val clockInStr = currentActiveRecord?.clockInTime
+        val calculatedDuration: Long = if (clockInStr != null) {
+            try {
+                val inDate = timeFormat.parse(clockInStr)
+                val outDate = timeFormat.parse(nowTime)
+                if (inDate != null && outDate != null) {
+                    val diff = (outDate.time - inDate.time) / (1000 * 60)
+                    if (diff >= 0) diff else diff + (24 * 60)
+                } else 480L
+            } catch (_: Exception) {
+                480L
+            }
+        } else {
+            480L
+        }
+
         val updated = currentActiveRecord!!.copy(
             clockOutTime = nowTime,
-            durationMinutes = 480
+            durationMinutes = calculatedDuration
         )
 
         currentActiveRecord = updated

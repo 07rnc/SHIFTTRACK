@@ -69,6 +69,13 @@ fun QrAttendanceScreen(
         hasCameraPermission = granted
     }
 
+    val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    DisposableEffect(Unit) {
+        onDispose {
+            cameraExecutor.shutdown()
+        }
+    }
+
     fun handleBack() {
         analyzer.pauseScanning()
         viewModel.resetActionState()
@@ -132,7 +139,7 @@ fun QrAttendanceScreen(
                                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                                 .build()
                                 .also {
-                                    it.setAnalyzer(Executors.newSingleThreadExecutor(), analyzer)
+                                    it.setAnalyzer(cameraExecutor, analyzer)
                                 }
 
                             try {

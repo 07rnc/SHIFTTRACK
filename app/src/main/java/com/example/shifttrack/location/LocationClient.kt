@@ -28,8 +28,22 @@ class LocationClient(private val context: Context) {
                lm?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true
     }
 
+    fun hasLocationPermission(): Boolean {
+        return androidx.core.content.ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+        androidx.core.content.ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
     @SuppressLint("MissingPermission")
     suspend fun getCurrentLocation(): LocationResult {
+        if (!hasLocationPermission()) {
+            return LocationResult.NoPermission
+        }
         if (!isGpsEnabled()) {
             return LocationResult.GpsDisabled
         }

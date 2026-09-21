@@ -28,7 +28,8 @@ class HomeViewModel(
     private val shiftRepository: ShiftRepository,
     private val attendanceRepository: AttendanceRepository,
     private val notificationRepository: NotificationRepository,
-    private val webSocketManager: WebSocketManager
+    private val webSocketManager: WebSocketManager,
+    private val sessionManager: com.example.shifttrack.data.local.SessionManager? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
@@ -39,6 +40,14 @@ class HomeViewModel(
         // triggers loadData() immediately when the screen enters composition.
         // Calling it here would cause a duplicate API call on every first visit.
         listenToLiveEvents()
+        if (sessionManager != null && !com.example.shifttrack.data.api.AppConfig.USE_MOCK_DATA && sessionManager.hasValidToken()) {
+            webSocketManager.connect(sessionManager.getServerUrl(), sessionManager.getAccessToken())
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        webSocketManager.disconnect()
     }
 
     fun loadData(isRefresh: Boolean = false) {
@@ -80,6 +89,13 @@ class HomeViewModel(
     }
 
     private fun listenToLiveEvents() {
+        viewModelScope.launch {
+            attendanceRepository.currentAttendanceState.collect { attState ->
+                if (attState != null) {
+                    _uiState.value = _uiState.value.copy(attendanceState = attState)
+                }
+            }
+        }
         viewModelScope.launch {
             webSocketManager.events.collect { event ->
                 when (event) {
